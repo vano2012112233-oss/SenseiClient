@@ -1,0 +1,37 @@
+name: Build Sensei Client
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Unpack source ZIP
+        run: |
+          ZIP=$(find . -maxdepth 2 -type f -name "*.zip" | head -n 1)
+          if [ -z "$ZIP" ]; then
+            echo "Source ZIP not found"
+            exit 1
+          fi
+          mkdir source
+          unzip -q "$ZIP" -d source
+          find source -type f | head -n 30
+
+      - name: Check for Gradle project
+        run: |
+          if ! find source -type f \( -name "build.gradle" -o -name "build.gradle.kts" \) | grep -q .; then
+            echo "No Gradle project found in ZIP; this ZIP cannot be built yet."
+            exit 1
+          fi
+          echo "Gradle project found. Build setup may need further configuration."
